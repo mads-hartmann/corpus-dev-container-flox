@@ -15,9 +15,8 @@ make run
 The Flox environment also defines a `web` service:
 
 ```sh
-flox activate -s
+flox services start web
 ```
 
 The service listens on `0.0.0.0:8000` by default and exposes `/healthz` for
 health checks.
-
