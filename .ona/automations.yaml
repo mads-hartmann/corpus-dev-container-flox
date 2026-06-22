@@ -1,0 +1,22 @@
+tasks:
+  check:
+    name: Check
+    description: Byte-compile the sources and run the HTTP self-test (make check).
+    command: |
+      make check
+    triggeredBy:
+      - manual
+
+services:
+  web:
+    name: Web
+    description: Run the application HTTP server on port 8000.
+    triggeredBy:
+      - manual
+      - postEnvironmentStart
+    commands:
+      start: |
+        ona environment port open 8000 --dont-wait --admission creator_only --name "Web"
+        make run HOST=0.0.0.0 PORT=8000
+      ready: |
+        curl -sf http://localhost:8000/healthz
