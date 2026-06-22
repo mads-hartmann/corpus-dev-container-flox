@@ -1,0 +1,13 @@
+version = 1
+
+[install]
+python.pkg-path = "python3"
+gnumake.pkg-path = "gnumake"
+curl.pkg-path = "curl"
+
+[vars]
+HOST = "0.0.0.0"
+PORT = "8000"
+
+[services.web]
+command = "python3 app.py"
