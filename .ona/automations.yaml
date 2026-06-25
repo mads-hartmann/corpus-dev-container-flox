@@ -1,0 +1,59 @@
+tasks:
+  installDeps:
+    name: Install dependencies
+    description: Build the Flox environment so its packages are realised and cached.
+    command: |
+      # This container has no init system, so start the Nix daemon that Flox
+      # relies on before activating (idempotent).
+      if ! pgrep -x nix-daemon >/dev/null 2>&1; then
+        sudo nohup /usr/sbin/nix-daemon --daemon >/tmp/nix-daemon.log 2>&1 &
+        for _ in $(seq 1 30); do
+          [ -S /nix/var/nix/daemon-socket/socket ] && break
+          sleep 1
+        done
+      fi
+      # Realise the environment described in .flox so packages are available.
+      flox activate -- true
+    triggeredBy:
+      - manual
+      - postDevcontainerStart
+      - prebuild
+
+  check:
+    name: Check
+    description: Compile sources and run the HTTP check inside the Flox environment.
+    command: |
+      if ! pgrep -x nix-daemon >/dev/null 2>&1; then
+        sudo nohup /usr/sbin/nix-daemon --daemon >/tmp/nix-daemon.log 2>&1 &
+        for _ in $(seq 1 30); do
+          [ -S /nix/var/nix/daemon-socket/socket ] && break
+          sleep 1
+        done
+      fi
+      flox activate -- make check
+    triggeredBy:
+      - manual
+    dependsOn:
+      - installDeps
+
+services:
+  web:
+    name: web
+    description: Run the app.py HTTP server on 0.0.0.0:8000 inside the Flox environment.
+    triggeredBy:
+      - manual
+      - postEnvironmentStart
+    commands:
+      start: |
+        if ! pgrep -x nix-daemon >/dev/null 2>&1; then
+          sudo nohup /usr/sbin/nix-daemon --daemon >/tmp/nix-daemon.log 2>&1 &
+          for _ in $(seq 1 30); do
+            [ -S /nix/var/nix/daemon-socket/socket ] && break
+            sleep 1
+          done
+        fi
+        ona environment port open 8000 --dont-wait --admission creator_only --name "web"
+        # HOST defaults to 0.0.0.0 (Flox vars / Makefile), so the port is reachable.
+        flox activate -- make run
+      ready: |
+        curl -sf http://localhost:8000/healthz

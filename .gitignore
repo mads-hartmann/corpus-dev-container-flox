@@ -4,6 +4,7 @@ __pycache__/
 .coverage
 htmlcov/
 .flox/cache/
+.flox/log/
 .flox/logs/
 .flox/run/
 result
