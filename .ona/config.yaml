@@ -1,0 +1,20 @@
+services:
+  web:
+    name: Web
+    description: Flox corpus HTTP service
+    triggeredBy:
+      - manual
+      - postEnvironmentStart
+    commands:
+      start: |
+        ona environment port open 8000 --admission creator_only --name "Web"
+        exec env HOST=0.0.0.0 PORT=8000 python3 app.py
+      ready: curl -fsS http://localhost:8000/healthz >/dev/null
+
+tasks:
+  check:
+    name: Check
+    description: Compile the application and run HTTP checks
+    triggeredBy:
+      - manual
+    command: make check
